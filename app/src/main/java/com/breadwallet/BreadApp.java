@@ -16,6 +16,8 @@ import android.view.WindowManager;
 import com.breadwallet.presenter.activities.util.BRActivity;
 import com.breadwallet.tools.listeners.SyncReceiver;
 import com.breadwallet.tools.security.BRKeyStore;
+import com.breadwallet.tools.util.Utils;
+import com.google.firebase.crash.FirebaseCrash;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,20 +61,18 @@ public class BreadApp extends Application {
     private static Timer isBackgroundChecker;
     public static AtomicInteger activityCounter = new AtomicInteger();
     public static long backgroundedTime;
+    public static boolean appInBackground;
 
     private static Activity currentActivity;
 
     @Override
     public void onCreate() {
         super.onCreate();
-
-        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+        if (Utils.isEmulatorOrDebug(this)) {
+//            BRKeyStore.putFailCount(0, this);
             HOST = "stage2.breadwallet.com";
-            //        StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
-//                .detectAll()
-//                .penaltyLog()
-////                .penaltyDeath()
-//                .build());
+            FirebaseCrash.setCrashCollectionEnabled(false);
+//            FirebaseCrash.report(new RuntimeException("test with new json file"));
         }
 
         WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
@@ -83,12 +83,12 @@ public class BreadApp extends Application {
         DISPLAY_HEIGHT_PX = size.y;
         mFingerprintManager = (FingerprintManager) getSystemService(Context.FINGERPRINT_SERVICE);
 
-        addOnBackgroundedListener(new OnAppBackgrounded() {
-            @Override
-            public void onBackgrounded() {
-
-            }
-        });
+//        addOnBackgroundedListener(new OnAppBackgrounded() {
+//            @Override
+//            public void onBackgrounded() {
+//
+//            }
+//        });
 
     }
 

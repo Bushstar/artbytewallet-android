@@ -21,9 +21,11 @@ import com.breadwallet.R;
 import com.breadwallet.presenter.activities.util.ActivityUTILS;
 import com.breadwallet.presenter.activities.util.BRActivity;
 import com.breadwallet.presenter.customviews.BRDialogView;
+import com.breadwallet.presenter.interfaces.BRAuthCompletion;
 import com.breadwallet.tools.animation.BRAnimator;
 import com.breadwallet.tools.animation.BRDialog;
 import com.breadwallet.tools.manager.BRSharedPrefs;
+import com.breadwallet.tools.security.AuthManager;
 import com.breadwallet.tools.security.BRKeyStore;
 import com.breadwallet.tools.util.BRConstants;
 import com.breadwallet.tools.util.BRCurrency;
@@ -97,10 +99,23 @@ public class FingerprintActivity extends BRActivity {
         ClickableSpan clickableSpan = new ClickableSpan() {
             @Override
             public void onClick(View textView) {
-                Intent intent = new Intent(FingerprintActivity.this, SpendLimitActivity.class);
-                overridePendingTransition(R.anim.enter_from_right, R.anim.exit_to_left);
-                startActivity(intent);
-                finish();
+
+                AuthManager.getInstance().authPrompt(FingerprintActivity.this, null, getString(R.string.VerifyPin_continueBody), true, false, new BRAuthCompletion() {
+                    @Override
+                    public void onComplete() {
+                        Intent intent = new Intent(FingerprintActivity.this, SpendLimitActivity.class);
+                        overridePendingTransition(R.anim.enter_from_right, R.anim.exit_to_left);
+                        startActivity(intent);
+                        finish();
+                    }
+
+                    @Override
+                    public void onCancel() {
+
+                    }
+                });
+
+
             }
 
             @Override
@@ -109,7 +124,10 @@ public class FingerprintActivity extends BRActivity {
                 ds.setUnderlineText(false);
             }
         };
-        ss.setSpan(clickableSpan, limitInfo.getText().toString().lastIndexOf(" "), limitInfo.getText().length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        //start index of the last space (beginning of the last word)
+        int indexOfSpace = limitInfo.getText().toString().lastIndexOf(" ");
+        // make the whole text clickable if failed to select the last word
+        ss.setSpan(clickableSpan, indexOfSpace == -1 ? 0 : indexOfSpace, limitInfo.getText().length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         limitInfo.setText(ss);
         limitInfo.setMovementMethod(LinkMovementMethod.getInstance());
@@ -134,7 +152,6 @@ public class FingerprintActivity extends BRActivity {
         super.onResume();
         appVisible = true;
         app = this;
-        ActivityUTILS.init(this);
     }
 
     @Override

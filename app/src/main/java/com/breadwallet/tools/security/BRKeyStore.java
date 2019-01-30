@@ -10,8 +10,13 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyPermanentlyInvalidatedException;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.UserNotAuthenticatedException;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextPaint;
+import android.text.style.ClickableSpan;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
 
 import com.breadwallet.R;
 import com.breadwallet.exceptions.BRKeystoreErrorException;
@@ -20,9 +25,12 @@ import com.breadwallet.tools.animation.BRAnimator;
 import com.breadwallet.tools.animation.BRDialog;
 import com.breadwallet.tools.manager.BRReportsManager;
 import com.breadwallet.tools.manager.BRSharedPrefs;
+import com.breadwallet.tools.threads.BRExecutor;
+import com.breadwallet.tools.util.BRConstants;
 import com.breadwallet.tools.util.BytesUtil;
 import com.breadwallet.tools.util.TypesConverter;
 import com.breadwallet.tools.util.Utils;
+import com.breadwallet.wallet.BRWalletManager;
 import com.platform.entities.WalletInfo;
 import com.platform.tools.KVStoreManager;
 
@@ -44,6 +52,8 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Handler;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -95,7 +105,6 @@ public class BRKeyStore {
     public static final String NEW_PADDING = KeyProperties.ENCRYPTION_PADDING_NONE;
     public static final String NEW_BLOCK_MODE = KeyProperties.BLOCK_MODE_GCM;
 
-
     public static Map<String, AliasObject> aliasObjectMap;
 
     private static final String PHRASE_IV = "ivphrase";
@@ -136,8 +145,10 @@ public class BRKeyStore {
     private static final String AUTH_KEY_FILENAME = "my_auth_key";
     private static final String TOKEN_FILENAME = "my_token";
     private static final String PASS_TIME_FILENAME = "my_pass_time";
+    private static boolean bugMessageShowing;
 
     public static final int AUTH_DURATION_SEC = 300;
+    private static final ReentrantLock lock = new ReentrantLock();
 
     static {
         aliasObjectMap = new HashMap<>();
@@ -156,6 +167,7 @@ public class BRKeyStore {
         aliasObjectMap.put(TOTAL_LIMIT_ALIAS, new AliasObject(TOTAL_LIMIT_ALIAS, TOTAL_LIMIT_FILENAME, TOTAL_LIMIT_IV));
 
         Assert.assertEquals(aliasObjectMap.size(), 12);
+
 //        Assert.assertEquals(AUTH_DURATION_SEC, 300);
     }
 
@@ -167,6 +179,7 @@ public class BRKeyStore {
 
         KeyStore keyStore = null;
         try {
+            lock.lock();
             keyStore = KeyStore.getInstance(ANDROID_KEY_STORE);
             keyStore.load(null);
             SecretKey secretKey = (SecretKey) keyStore.getKey(alias, null);
@@ -181,10 +194,10 @@ public class BRKeyStore {
                 try {
                     inCipher.init(Cipher.ENCRYPT_MODE, secretKey);
                 } catch (InvalidKeyException ignored) {
-                    Log.e(TAG, "_setData: OLD KEY PRESENT");
                     if (ignored instanceof UserNotAuthenticatedException) {
                         throw ignored;
                     }
+                    Log.e(TAG, "_setData: OLD KEY PRESENT: " + alias);
                     //create new key and reinitialize the cipher
                     secretKey = createKeys(alias, auth_required);
                     inCipher.init(Cipher.ENCRYPT_MODE, secretKey);
@@ -209,23 +222,27 @@ public class BRKeyStore {
             storeEncryptedData(context, encryptedData, alias);
             return true;
         } catch (UserNotAuthenticatedException e) {
-            Log.d(TAG, "setData: User not Authenticated, requesting..." + alias + ", err(" + e.getMessage() + ")");
-            showAuthenticationScreen(context, request_code);
+            Log.e(TAG, "_setData: showAuthenticationScreen: " + alias);
+            showAuthenticationScreen(context, request_code, alias);
             throw e;
         } catch (InvalidKeyException ex) {
-            if (ex instanceof KeyPermanentlyInvalidatedException)
+            if (ex instanceof KeyPermanentlyInvalidatedException) {
                 showKeyInvalidated(context);
-            throw new UserNotAuthenticatedException(); //just to make the flow stop
+                throw new UserNotAuthenticatedException(); //just to make the flow stop
+            }
+
+            BRReportsManager.reportBug(ex);
+            return false;
         } catch (Exception e) {
             BRReportsManager.reportBug(e);
             e.printStackTrace();
             return false;
+        } finally {
+            lock.unlock();
         }
     }
 
     private static SecretKey createKeys(String alias, boolean auth_required) throws InvalidAlgorithmParameterException, KeyStoreException, NoSuchProviderException, NoSuchAlgorithmException {
-        // Create the keys if necessary
-
         KeyGenerator keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEY_STORE);
 
         // Set the alias of the entry in Android KeyStore where the key will appear
@@ -247,8 +264,8 @@ public class BRKeyStore {
         validateGet(alias, alias_file, alias_iv);//validate entries
         KeyStore keyStore = null;
 
-//        byte[] result = new byte[0];
         try {
+            lock.lock();
             keyStore = KeyStore.getInstance(ANDROID_KEY_STORE);
             keyStore.load(null);
             SecretKey secretKey = (SecretKey) keyStore.getKey(alias, null);
@@ -307,20 +324,25 @@ public class BRKeyStore {
 
             byte[] iv = readBytesFromFile(getFilePath(alias_iv, context));
             if (Utils.isNullOrEmpty(iv))
-                throw new NullPointerException("iv is missing for " + alias);
-            Cipher outCipher;
-            outCipher = Cipher.getInstance(CIPHER_ALGORITHM);
+                throw new RuntimeException("iv is missing for " + alias);
+            Cipher outCipher = Cipher.getInstance(CIPHER_ALGORITHM);
             outCipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
             CipherInputStream cipherInputStream = new CipherInputStream(new FileInputStream(encryptedDataFilePath), outCipher);
             byte[] result = BytesUtil.readBytesFromStream(cipherInputStream);
+            if (result == null)
+                throw new RuntimeException("Failed to read bytes from CipherInputStream for alias " + alias);
 
             //create the new format key
             SecretKey newKey = createKeys(alias, (alias.equals(PHRASE_ALIAS) || alias.equals(CANARY_ALIAS)));
+            if (newKey == null)
+                throw new RuntimeException("Failed to create new key for alias " + alias);
             Cipher inCipher = Cipher.getInstance(NEW_CIPHER_ALGORITHM);
+            //init the cipher
             inCipher.init(Cipher.ENCRYPT_MODE, newKey);
             iv = inCipher.getIV();
             //store the new iv
             storeEncryptedData(context, iv, alias_iv);
+            //encrypt the data
             encryptedData = inCipher.doFinal(result);
             //store the new data
             storeEncryptedData(context, encryptedData, alias);
@@ -329,7 +351,8 @@ public class BRKeyStore {
         } catch (InvalidKeyException e) {
             if (e instanceof UserNotAuthenticatedException) {
                 /** user not authenticated, ask the system for authentication */
-                showAuthenticationScreen(context, request_code);
+                Log.e(TAG, "_getData: showAuthenticationScreen: " + alias);
+                showAuthenticationScreen(context, request_code, alias);
                 throw (UserNotAuthenticatedException) e;
             } else {
                 Log.e(TAG, "_getData: InvalidKeyException", e);
@@ -361,6 +384,8 @@ public class BRKeyStore {
         } catch (BadPaddingException | IllegalBlockSizeException | NoSuchProviderException e) {
             e.printStackTrace();
             throw new RuntimeException(e.getMessage());
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -386,7 +411,7 @@ public class BRKeyStore {
                 throw new IllegalArgumentException("keystore auth_required is true but alias is: " + alias);
     }
 
-    private static void showKeyInvalidated(final Context app) {
+    public static void showKeyInvalidated(final Context app) {
         BRDialog.showCustomDialog(app, app.getString(R.string.Alert_keystore_title_android), app.getString(R.string.Alert_keystore_invalidated_android), app.getString(R.string.Button_ok), null, new BRDialogView.BROnClickListener() {
             @Override
             public void onClick(BRDialogView brDialogView) {
@@ -395,7 +420,8 @@ public class BRKeyStore {
         }, null, new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
-                resetWalletKeyStore(app);
+                BRWalletManager.getInstance().wipeWalletButKeystore(app);
+                BRWalletManager.getInstance().wipeKeyStore(app);
                 dialog.dismiss();
             }
         }, 0);
@@ -407,16 +433,28 @@ public class BRKeyStore {
     }
 
     public synchronized static boolean putPhrase(byte[] strToStore, Context context, int requestCode) throws UserNotAuthenticatedException {
+        if (PostAuth.isStuckWithAuthLoop) {
+            showLoopBugMessage(context);
+            throw new UserNotAuthenticatedException();
+        }
         AliasObject obj = aliasObjectMap.get(PHRASE_ALIAS);
         return !(strToStore == null || strToStore.length == 0) && _setData(context, strToStore, obj.alias, obj.datafileName, obj.ivFileName, requestCode, true);
     }
 
     public synchronized static byte[] getPhrase(final Context context, int requestCode) throws UserNotAuthenticatedException {
+        if (PostAuth.isStuckWithAuthLoop) {
+            showLoopBugMessage(context);
+            throw new UserNotAuthenticatedException();
+        }
         AliasObject obj = aliasObjectMap.get(PHRASE_ALIAS);
         return _getData(context, obj.alias, obj.datafileName, obj.ivFileName, requestCode);
     }
 
     public synchronized static boolean putCanary(String strToStore, Context context, int requestCode) throws UserNotAuthenticatedException {
+        if (PostAuth.isStuckWithAuthLoop) {
+            showLoopBugMessage(context);
+            throw new UserNotAuthenticatedException();
+        }
         if (strToStore == null || strToStore.isEmpty()) return false;
         AliasObject obj = aliasObjectMap.get(CANARY_ALIAS);
         byte[] strBytes = new byte[0];
@@ -429,6 +467,10 @@ public class BRKeyStore {
     }
 
     public synchronized static String getCanary(final Context context, int requestCode) throws UserNotAuthenticatedException {
+        if (PostAuth.isStuckWithAuthLoop) {
+            showLoopBugMessage(context);
+            throw new UserNotAuthenticatedException();
+        }
         AliasObject obj = aliasObjectMap.get(CANARY_ALIAS);
         byte[] data;
         data = _getData(context, obj.alias, obj.datafileName, obj.ivFileName, requestCode);
@@ -758,10 +800,13 @@ public class BRKeyStore {
         return Base64.decode(base64, Base64.DEFAULT);
     }
 
-    public synchronized static void showAuthenticationScreen(Context context, int requestCode) {
+    public synchronized static void showAuthenticationScreen(Context context, int requestCode, String alias) {
         // Create the Confirm Credentials screen. You can customize the title and description. Or
         // we will provide a generic one for you if you leave it null
-        Log.e(TAG, "showAuthenticationScreen: ");
+        if (!alias.equalsIgnoreCase(PHRASE_ALIAS) && !alias.equalsIgnoreCase(CANARY_ALIAS)) {
+            BRReportsManager.reportBug(new IllegalArgumentException("requesting auth for: " + alias), true);
+        }
+//        Log.e(TAG, "showAuthenticationScreen: " + alias);
         if (context instanceof Activity) {
             Activity app = (Activity) context;
             KeyguardManager mKeyguardManager = (KeyguardManager) app.getSystemService(Context.KEYGUARD_SERVICE);
@@ -770,10 +815,15 @@ public class BRKeyStore {
                 BRReportsManager.reportBug(ex, true);
                 return;
             }
-            Intent intent = mKeyguardManager.createConfirmDeviceCredentialIntent(context.getString(R.string.UnlockScreen_touchIdTitle_android), context.getString(R.string.UnlockScreen_touchIdPrompt_android));
-//        Assert.assertTrue(intent != null);
+            String message = context.getString(R.string.UnlockScreen_touchIdPrompt_android);
+            if (Utils.isEmulatorOrDebug(app)) {
+                message = alias;
+            }
+            Intent intent = mKeyguardManager.createConfirmDeviceCredentialIntent(context.getString(R.string.UnlockScreen_touchIdTitle_android), message);
+
+            if (Utils.isEmulatorOrDebug(context))
+                intent = mKeyguardManager.createConfirmDeviceCredentialIntent(alias, context.getString(R.string.UnlockScreen_touchIdPrompt_android));
             if (intent != null) {
-                Log.e(TAG, "showAuthenticationScreen: starting activity");
                 app.startActivityForResult(intent, requestCode);
             } else {
                 Log.e(TAG, "showAuthenticationScreen: failed to create intent for auth");
@@ -798,35 +848,6 @@ public class BRKeyStore {
         }
         return bytes;
     }
-
-//    public static boolean writeBytesToFile(String path, byte[] data) {
-//
-//        FileOutputStream fos = null;
-//
-//        try {
-//            File file = new File(path);
-//            fos = new FileOutputStream(file);
-//            // Writes bytes from the specified byte array to this file output stream
-//            fos.write(data);
-//            return true;
-//        } catch (FileNotFoundException e) {
-//            System.out.println("File not found" + e);
-//        } catch (IOException ioe) {
-//            System.out.println("Exception while writing file " + ioe);
-//        } finally {
-//            // close the streams using close method
-//            try {
-//                if (fos != null) {
-//                    fos.close();
-//                }
-//
-//            } catch (IOException ioe) {
-//                System.out.println("Error while closing stream: " + ioe);
-//            }
-//
-//        }
-//        return false;
-//    }
 
     //USE ONLY FOR TESTING
     public synchronized static boolean _setOldData(Context context, byte[] data, String alias, String alias_file, String alias_iv,
@@ -899,8 +920,8 @@ public class BRKeyStore {
             }
             return true;
         } catch (UserNotAuthenticatedException e) {
-            Log.d(TAG, "setData: User not Authenticated, requesting..." + alias + ", err(" + e.getMessage() + ")");
-            showAuthenticationScreen(context, request_code);
+            Log.e(TAG, "_setOldData: showAuthenticationScreen: " + alias);
+            showAuthenticationScreen(context, request_code, alias);
             throw e;
         } catch (Exception e) {
             Log.e(TAG, "_setOldData: ", e);
@@ -963,7 +984,8 @@ public class BRKeyStore {
         } catch (InvalidKeyException e) {
             if (e instanceof UserNotAuthenticatedException) {
                 /** user not authenticated, ask the system for authentication */
-                showAuthenticationScreen(context, request_code);
+                Log.e(TAG, "_getOldData: showAuthenticationScreen: " + alias);
+                showAuthenticationScreen(context, request_code, alias);
                 throw (UserNotAuthenticatedException) e;
             } else {
                 Log.e(TAG, "_getOldData: InvalidKeyException", e);
@@ -979,6 +1001,49 @@ public class BRKeyStore {
             Log.e(TAG, "getData: error: " + e.getClass().getSuperclass().getName());
             return null;
         }
+    }
+
+    private static void showLoopBugMessage(final Context app) {
+        if (bugMessageShowing) return;
+        bugMessageShowing = true;
+        Log.e(TAG, "showLoopBugMessage: ");
+        String mess = app.getString(R.string.ErrorMessages_loopingLockScreen_android);
+
+        SpannableString ss = new SpannableString(mess.replace("[", "").replace("]", ""));
+        ClickableSpan clickableSpan = new ClickableSpan() {
+            @Override
+            public void onClick(View textView) {
+                Log.e(TAG, "onClick: clicked on span!");
+                BRExecutor.getInstance().forMainThreadTasks().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        BRDialog.hideDialog();
+                        BRAnimator.showSupportFragment((Activity) app, BRConstants.loopBug);
+                    }
+                });
+
+            }
+
+            @Override
+            public void updateDrawState(TextPaint ds) {
+                super.updateDrawState(ds);
+                ds.setUnderlineText(false);
+            }
+        };
+        ss.setSpan(clickableSpan, mess.indexOf("[") - 1, mess.indexOf("]") - 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        BRDialog.showCustomDialog(app, app.getString(R.string.JailbreakWarnings_title), ss, app.getString(R.string.AccessibilityLabels_close), null,
+                new BRDialogView.BROnClickListener() {
+                    @Override
+                    public void onClick(BRDialogView brDialogView) {
+                        if (app instanceof Activity) ((Activity) app).finish();
+                    }
+                }, null, new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        bugMessageShowing = false;
+                    }
+                }, 0);
+
     }
 
 

@@ -193,7 +193,8 @@ Java_com_breadwallet_wallet_BRWalletManager_encodeSeed(JNIEnv *env, jobject thiz
     int wordsCount = (*env)->GetArrayLength(env, stringArray);
     int seedLength = (*env)->GetArrayLength(env, seed);
     const char *wordList[wordsCount];
-
+    assert(seedLength == 16);
+    assert(wordsCount == 2048);
     for (int i = 0; i < wordsCount; i++) {
         jstring string = (jstring) (*env)->GetObjectArrayElement(env, stringArray, i);
         const char *rawString = (*env)->GetStringUTFChars(env, string, 0);
@@ -201,16 +202,21 @@ Java_com_breadwallet_wallet_BRWalletManager_encodeSeed(JNIEnv *env, jobject thiz
         wordList[i] = rawString;
         (*env)->DeleteLocalRef(env, string);
     }
+    __android_log_print(ANDROID_LOG_DEBUG, "Message from C: ", "encodeSeed: %zu", sizeof(wordList));
 
     jbyte *byteSeed = (*env)->GetByteArrayElements(env, seed, 0);
-    char result[BRBIP39Encode(NULL, 0, wordList, (uint8_t *) byteSeed, (size_t) seedLength)];
+    size_t size = BRBIP39Encode(NULL, 0, wordList, (uint8_t *) byteSeed, (size_t) seedLength);
+    char result[size];
+    jbyteArray bytePhrase = NULL;
 
-    BRBIP39Encode((char *) result, sizeof(result), wordList, (const uint8_t *) byteSeed,
-                  (size_t) seedLength);
-    jbyte *phraseJbyte = (jbyte *) result;
-    int size = sizeof(result) - 1;
-    jbyteArray bytePhrase = (*env)->NewByteArray(env, size);
-    (*env)->SetByteArrayRegion(env, bytePhrase, 0, size, phraseJbyte);
+    size = BRBIP39Encode(result, sizeof(result), wordList, (const uint8_t *) byteSeed,
+                         (size_t) seedLength);
+
+    if (size > 0) {
+        bytePhrase = (*env)->NewByteArray(env, (int) size - 1);
+        (*env)->SetByteArrayRegion(env, bytePhrase, 0, (int) size - 1, (jbyte *) result);
+
+    }
 
     return bytePhrase;
 }
@@ -371,6 +377,12 @@ JNIEXPORT jobjectArray JNICALL Java_com_breadwallet_wallet_BRWalletManager_getTr
         UInt256 txid = tempTx->txHash;
         jbyteArray JtxHash = (*env)->NewByteArray(env, sizeof(txid));
         (*env)->SetByteArrayRegion(env, JtxHash, 0, (jsize) sizeof(txid), (jbyte *) txid.u8);
+
+        UInt256 reversedHash = UInt256Reverse((txid));
+
+        jstring txReversed = (*env)->NewStringUTF(env, u256_hex_encode(reversedHash));
+
+
         jlong Jsent = (jlong) BRWalletAmountSentByTx(_wallet, tempTx);
         jlong Jreceived = (jlong) BRWalletAmountReceivedFromTx(_wallet, tempTx);
         jlong Jfee = (jlong) BRWalletFeeForTx(_wallet, tempTx);
@@ -422,7 +434,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_breadwallet_wallet_BRWalletManager_getTr
         jlong JbalanceAfterTx = (jlong) BRWalletBalanceAfterTx(_wallet, tempTx);
 
         jobject txObject = (*env)->NewObject(env, txClass, txObjMid, JtimeStamp, JblockHeight,
-                                             JtxHash, NULL, Jsent,
+                                             JtxHash, txReversed, Jsent,
                                              Jreceived, Jfee, JtoAddresses, JfromAddresses,
                                              JbalanceAfterTx, JtxSize,
                                              JoutAmounts, isValid);
@@ -433,6 +445,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_breadwallet_wallet_BRWalletManager_getTr
         (*env)->DeleteLocalRef(env, JtoAddresses);
         (*env)->DeleteLocalRef(env, JoutAmounts);
         (*env)->DeleteLocalRef(env, JtxHash);
+        (*env)->DeleteLocalRef(env, txReversed);
 
     }
 
@@ -520,10 +533,8 @@ Java_com_breadwallet_wallet_BRWalletManager_feeForTransaction(JNIEnv *env, jobje
 JNIEXPORT jlong JNICALL
 Java_com_breadwallet_wallet_BRWalletManager_feeForTransactionAmount(JNIEnv *env, jobject obj,
                                                                     jlong amount) {
-    __android_log_print(ANDROID_LOG_DEBUG, "Message from C: ", "feeForTransaction");
     if (!_wallet) return 0;
-    __android_log_print(ANDROID_LOG_DEBUG, "Message from C: ",
-                        "current fee: %lu", BRWalletFeePerKb(_wallet));
+    __android_log_print(ANDROID_LOG_DEBUG, "Message from C: ", "current fee: %lu", BRWalletFeePerKb(_wallet));
     uint64_t fee = BRWalletFeeForTxAmount(_wallet, (uint64_t) amount);
     return (jlong) fee;
 }
@@ -859,6 +870,7 @@ Java_com_breadwallet_wallet_BRWalletManager_reverseTxHash(JNIEnv *env, jobject t
 
     return (*env)->NewStringUTF(env, u256_hex_encode(reversedHash));
 }
+
 JNIEXPORT jstring JNICALL
 Java_com_breadwallet_wallet_BRWalletManager_txHashToHex(JNIEnv *env, jobject thiz,
                                                         jbyteArray txHash) {
@@ -1020,6 +1032,20 @@ JNIEXPORT jlong JNICALL Java_com_breadwallet_wallet_BRWalletManager_nativeBalanc
 //    BRTransaction *tmpTx = BRTransactionParse((uint8_t *) byteTx, (size_t) txLength);
     if (!_wallet) return -1;
     return BRWalletBalance(_wallet);
+}
+JNIEXPORT jlong JNICALL Java_com_breadwallet_wallet_BRWalletManager_defaultFee(
+        JNIEnv *env,
+        jobject thiz) {
+    __android_log_print(ANDROID_LOG_DEBUG, "Message from C: ", "defaultFee");
+
+    return DEFAULT_FEE_PER_KB;
+}
+JNIEXPORT jlong JNICALL Java_com_breadwallet_wallet_BRWalletManager_maxFee(
+        JNIEnv *env,
+        jobject thiz) {
+    __android_log_print(ANDROID_LOG_DEBUG, "Message from C: ", "maxFee");
+
+    return MAX_FEE_PER_KB;
 }
 
 //creates and signs a bcash tx, returns the serialized tx

@@ -16,7 +16,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.breadwallet.R;
-import com.breadwallet.presenter.activities.util.ActivityUTILS;
 import com.breadwallet.presenter.activities.util.BRActivity;
 import com.breadwallet.presenter.customviews.BRDialogView;
 import com.breadwallet.presenter.fragments.FragmentPhraseWord;
@@ -25,7 +24,6 @@ import com.breadwallet.tools.animation.BRDialog;
 import com.breadwallet.tools.manager.BRReportsManager;
 import com.breadwallet.tools.security.PostAuth;
 import com.breadwallet.tools.util.Utils;
-import com.google.firebase.crash.FirebaseCrash;
 
 import java.util.Locale;
 
@@ -67,7 +65,6 @@ public class PaperKeyActivity extends BRActivity {
                     setButtonEnabled(false);
                 else
                     setButtonEnabled(true);
-
                 updateItemIndexText();
             }
         });
@@ -109,7 +106,7 @@ public class PaperKeyActivity extends BRActivity {
 
         String wordArray[] = cleanPhrase.split(" ");
 
-        if (wordArray.length == 12 && cleanPhrase.charAt(cleanPhrase.length() - 1) == '\0') {
+        if (cleanPhrase.charAt(cleanPhrase.length() - 1) == '\0') {
             BRDialog.showCustomDialog(this, getString(R.string.JailbreakWarnings_title),
                     getString(R.string.Alert_keystore_generic_android), getString(R.string.Button_ok), null, new BRDialogView.BROnClickListener() {
                         @Override
@@ -117,9 +114,11 @@ public class PaperKeyActivity extends BRActivity {
                             brDialogView.dismissWithAnimation();
                         }
                     }, null, null, 0);
-            BRReportsManager.reportBug(new IllegalArgumentException("Paper Key error, please contact support at support@artbyte.me"), false);
-
+            BRReportsManager.reportBug(new IllegalArgumentException("Paper Key error, please contact support at support@artbyte.me: " + wordArray.length), true);
         } else {
+            if (wordArray.length != 12) {
+                BRReportsManager.reportBug(new IllegalArgumentException("Wrong number of paper keys: " + wordArray.length + ", lang: " + Locale.getDefault().getLanguage()), true);
+            }
             WordPagerAdapter adapter = new WordPagerAdapter(getFragmentManager());
             adapter.setWords(wordArray);
             wordViewPager.setAdapter(adapter);
@@ -163,7 +162,6 @@ public class PaperKeyActivity extends BRActivity {
         super.onResume();
         appVisible = true;
         app = this;
-        ActivityUTILS.init(this);
     }
 
     @Override

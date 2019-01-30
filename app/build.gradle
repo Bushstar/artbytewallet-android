@@ -54,7 +54,7 @@ android {
         artbyte {
             applicationId "com.artbytewallet"
             dimension "mode"
-            resValue "string", "app_name", "artbyte"
+            resValue "string", "app_name", "ArtByteWallet"
             buildConfigField "boolean", "BITCOIN_TESTNET", "false"
 
             externalNativeBuild {
@@ -71,7 +71,7 @@ android {
         artbyteTestnet {
             applicationId "com.artbytewallettestnet"
             dimension "mode"
-            resValue "string", "app_name", "artbyte-testnet"
+            resValue "string", "app_name", "ArtByteWallet-testnet"
             buildConfigField "boolean", "BITCOIN_TESTNET", "true"
 
             externalNativeBuild {

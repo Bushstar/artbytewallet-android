@@ -122,6 +122,7 @@ public class FragmentRequestAmount extends Fragment {
         amountEdit = (EditText) rootView.findViewById(R.id.amount_edit);
         amountBuilder = new StringBuilder(0);
         isoButton = (Button) rootView.findViewById(R.id.iso_button);
+        isoButton.setVisibility(View.GONE);
         mTitle = (TextView) rootView.findViewById(R.id.title);
         mAddress = (TextView) rootView.findViewById(R.id.address_text);
         mQrImage = (ImageView) rootView.findViewById(R.id.qr_image);

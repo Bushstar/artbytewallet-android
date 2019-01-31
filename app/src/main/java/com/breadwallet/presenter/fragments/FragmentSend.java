@@ -144,6 +144,7 @@ public class FragmentSend extends Fragment {
         feeText = (TextView) rootView.findViewById(R.id.fee_text);
         edit = (ImageView) rootView.findViewById(R.id.edit);
         isoButton = (Button) rootView.findViewById(R.id.iso_button);
+        isoButton.setVisibility(View.GONE);
         keyboardLayout = (LinearLayout) rootView.findViewById(R.id.keyboard_layout);
         amountLayout = (ConstraintLayout) rootView.findViewById(R.id.amount_layout);
         feeLayout = (BRLinearLayoutWithCaret) rootView.findViewById(R.id.fee_buttons_layout);

@@ -778,6 +778,7 @@ public class APIClient {
         });
 
         //update kvStore
+        /*
         BRExecutor.getInstance().forBackgroundTasks().execute(new Runnable() {
             @Override
             public void run() {
@@ -790,6 +791,7 @@ public class APIClient {
                 itemFinished();
             }
         });
+        */
 
         //update fee
         BRExecutor.getInstance().forBackgroundTasks().execute(new Runnable() {

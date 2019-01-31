@@ -215,9 +215,6 @@
   <!-- Ignore jailbreak warning button -->
   <string name="JailbreakWarnings.ignore">Ignorer</string>
   <!-- Jailbreak warning message -->
-  <string name="JailbreakWarnings.messageWithBalance">ENHEDENS SIKKERHED ER KOMPROMITTERET\n Enhver \'jailbreak\' app kan få adgang til Breads nøgledata og stjæle dine ArtByte! Ryd straks denne pung og gendan på en sikker enhed.</string>
-  <!-- Jailbreak warning message -->
-  <string name="JailbreakWarnings.messageWithoutBalance">ENHEDENS SIKKERHED ER KOMPROMITTERET\n Enhver \'jailbreak\' app kan få adgang til Breads nøgledata og stjæle dine ArtByte. Brug kun Bread på en ikke jailbreaket enhed.</string>
   <string name="JailbreakWarnings.messageWithBalance">ENHEDENS SIKKERHED ER KOMPROMITTERET\n Enhver \'jailbreak\' app kan få adgang til ArtBytes nøgledata og stjæle dine ArtByte! Ryd straks denne pung og gendan på en sikker enhed.</string>
   <!-- Jailbreak warning message -->
   <string name="JailbreakWarnings.messageWithoutBalance">ENHEDENS SIKKERHED ER KOMPROMITTERET\n Enhver \'jailbreak\' app kan få adgang til ArtBytes nøgledata og stjæle dine ArtByte. Brug kun ArtByte på en ikke jailbreaket enhed.</string>

@@ -33,6 +33,7 @@ public class WipeActivity extends BRActivity {
         close = (ImageButton) findViewById(R.id.close_button);
 
         ImageButton faq = (ImageButton) findViewById(R.id.faq_button);
+        faq.setVisibility(View.GONE);
 
         faq.setOnClickListener(new View.OnClickListener() {
             @Override

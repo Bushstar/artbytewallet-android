@@ -703,7 +703,7 @@
   <!-- Updating webview message -->
   <string name="Webview.updating">Updating...</string>
   <!-- Welcome screen text. (?) will be replaced with the help icon users should look for. -->
-  <string name="Welcome.body">If you need help, look for the (?) in the top right of most screens.</string>
+  <string name="Welcome.body">Light mobile wallet for the ArtByte network</string>
   <!-- Top title of welcome screen -->
   <string name="Welcome.title">Welcome to ArtByte!</string>
   <!-- Wipe wallet alert message -->

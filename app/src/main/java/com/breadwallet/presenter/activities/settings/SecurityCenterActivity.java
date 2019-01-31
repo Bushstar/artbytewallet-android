@@ -73,6 +73,7 @@ public class SecurityCenterActivity extends BRActivity {
         updateList();
 
         ImageButton faq = (ImageButton) findViewById(R.id.faq_button);
+        faq.setVisibility(View.GONE);
 
         faq.setOnClickListener(new View.OnClickListener() {
             @Override

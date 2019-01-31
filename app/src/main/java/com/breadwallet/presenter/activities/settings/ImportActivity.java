@@ -41,6 +41,7 @@ public class ImportActivity extends BRActivity {
         });
 
         ImageButton faq = (ImageButton) findViewById(R.id.faq_button);
+        faq.setVisibility(View.GONE);
 
         faq.setOnClickListener(new View.OnClickListener() {
             @Override

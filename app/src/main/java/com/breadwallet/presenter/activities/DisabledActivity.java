@@ -46,6 +46,7 @@ public class DisabledActivity extends BRActivity {
         resetButton = (Button) findViewById(R.id.reset_button);
 
         ImageButton faq = (ImageButton) findViewById(R.id.faq_button);
+        faq.setVisibility(View.GONE);
 
         faq.setOnClickListener(new View.OnClickListener() {
             @Override

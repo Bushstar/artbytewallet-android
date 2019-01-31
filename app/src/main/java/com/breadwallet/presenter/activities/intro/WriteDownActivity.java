@@ -40,6 +40,7 @@ public class WriteDownActivity extends BRActivity {
             }
         });
         ImageButton faq = (ImageButton) findViewById(R.id.faq_button);
+        faq.setVisibility(View.GONE);
         faq.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

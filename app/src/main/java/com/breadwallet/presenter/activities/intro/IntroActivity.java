@@ -89,6 +89,7 @@ public class IntroActivity extends BRActivity implements Serializable {
         updateBundles();
 //        SyncManager.getInstance().updateAlarms(this);
         faq = (ImageButton) findViewById(R.id.faq_button);
+        faq.setVisibility(View.GONE);
 
         faq.setOnClickListener(new View.OnClickListener() {
             @Override

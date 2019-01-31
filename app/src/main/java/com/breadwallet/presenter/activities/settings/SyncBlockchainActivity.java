@@ -39,6 +39,7 @@ public class SyncBlockchainActivity extends BRActivity {
         setContentView(R.layout.activity_sync_blockchain);
 
         ImageButton faq = (ImageButton) findViewById(R.id.faq_button);
+        faq.setVisibility(View.GONE);
 
         faq.setOnClickListener(new View.OnClickListener() {
             @Override

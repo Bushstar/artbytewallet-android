@@ -57,6 +57,7 @@ public class DisplayCurrencyActivity extends BRActivity {
         setContentView(R.layout.activity_display_currency);
 
         ImageButton faq = findViewById(R.id.faq_button);
+        faq.setVisibility(View.GONE);
 
         faq.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -56,6 +56,7 @@ public class SpendLimitActivity extends BRActivity {
         setContentView(R.layout.activity_spend_limit);
 
         ImageButton faq = findViewById(R.id.faq_button);
+        faq.setVisibility(View.GONE);
 
         faq.setOnClickListener(new View.OnClickListener() {
             @Override

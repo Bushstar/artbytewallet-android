@@ -63,6 +63,7 @@ public class FingerprintActivity extends BRActivity {
         limitInfo = (TextView) findViewById(R.id.limit_info);
 
         ImageButton faq = (ImageButton) findViewById(R.id.faq_button);
+        faq.setVisibility(View.GONE);
 
         faq.setOnClickListener(new View.OnClickListener() {
             @Override

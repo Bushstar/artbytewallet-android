@@ -196,34 +196,12 @@ public class BRApiManager {
     }
 
     public static void updateFeePerKb(Context app) {
-        String jsonString = urlGET(app, "https://%s/fee-per-kb");
-        if (jsonString == null || jsonString.isEmpty()) {
-            Log.e(TAG, "updateFeePerKb: failed to update fee, response string: " + jsonString);
-            return;
-        }
-        long fee;
-        long economyFee;
-        try {
-            JSONObject obj = new JSONObject(jsonString);
-            fee = obj.getLong("fee_per_kb");
-            economyFee = obj.getLong("fee_per_kb_economy");
-            if (fee != 0 && fee < BRWalletManager.getInstance().maxFee()) {
-                BRSharedPrefs.putFeePerKb(app, fee);
-                BRWalletManager.getInstance().setFeePerKb(fee, isEconomyFee); //todo improve that logic
-                BRSharedPrefs.putFeeTime(app, System.currentTimeMillis()); //store the time of the last successful fee fetch
-            } else {
-                FirebaseCrash.report(new NullPointerException("Fee is weird:" + fee));
-            }
-            if (economyFee != 0 && economyFee < BRWalletManager.getInstance().maxFee()) {
-                BRSharedPrefs.putEconomyFeePerKb(app, economyFee);
-            } else {
-                FirebaseCrash.report(new NullPointerException("Economy fee is weird:" + economyFee));
-            }
-        } catch (JSONException e) {
-            Log.e(TAG, "updateFeePerKb: FAILED: " + jsonString, e);
-            BRReportsManager.reportBug(e);
-            BRReportsManager.reportBug(new IllegalArgumentException("JSON ERR: " + jsonString));
-        }
+        long fee = 200000;
+        long economyFee = 100000;
+        BRSharedPrefs.putFeePerKb(app, fee);
+        BRWalletManager.getInstance().setFeePerKb(fee, isEconomyFee); //todo improve that logic
+        BRSharedPrefs.putFeeTime(app, System.currentTimeMillis()); //store the time of the last successful fee fetch
+        BRSharedPrefs.putEconomyFeePerKb(app, economyFee);
     }
 
     private static String urlGET(Context app, String myURL) {

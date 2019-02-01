@@ -119,7 +119,7 @@ public class SettingsActivity extends BRActivity {
     private void populateItems() {
 
         items.add(new BRSettingsItem(getString(R.string.Settings_wallet), "", null, true));
-
+/*
         items.add(new BRSettingsItem(getString(R.string.Settings_importTitle), "", new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -129,7 +129,7 @@ public class SettingsActivity extends BRActivity {
 
             }
         }, false));
-
+*/
         items.add(new BRSettingsItem(getString(R.string.Settings_wipe), "", new View.OnClickListener() {
             @Override
             public void onClick(View v) {

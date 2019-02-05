@@ -87,30 +87,28 @@ public class BRApiManager {
     private Set<CurrencyEntity> getCurrencies(Activity context) {
         Set<CurrencyEntity> set = new LinkedHashSet<>();
         try {
-            JSONArray arr = fetchRates(context);
+            JSONObject arr = fetchRates(context);
             updateFeePerKb(context);
             if (arr != null) {
-                int length = arr.length();
-                for (int i = 1; i < length; i++) {
-                    CurrencyEntity tmp = new CurrencyEntity();
-                    try {
-                        JSONObject tmpObj = (JSONObject) arr.get(i);
-                        tmp.name = tmpObj.getString("name");
-                        tmp.code = tmpObj.getString("code");
-                        tmp.rate = (float) tmpObj.getDouble("rate");
-                        String selectedISO = BRSharedPrefs.getIso(context);
-//                        Log.e(TAG,"selectedISO: " + selectedISO);
-                        if (tmp.code.equalsIgnoreCase(selectedISO)) {
-//                            Log.e(TAG, "theIso : " + theIso);
-//                                Log.e(TAG, "Putting the shit in the shared preffs");
-                            BRSharedPrefs.putIso(context, tmp.code);
-                            BRSharedPrefs.putCurrencyListPosition(context, i - 1);
-                        }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+                CurrencyEntity tmp = new CurrencyEntity();
+                try {
+                    tmp.name = "US Dollar";
+                    tmp.code = "USD";
+                    JSONObject quotes = arr.getJSONObject("quotes");
+                    JSONObject usd = quotes.getJSONObject("USD");
+                    tmp.rate = (float) usd.getDouble("price");
+                    String selectedISO = BRSharedPrefs.getIso(context);
+//                  Log.e(TAG,"selectedISO: " + selectedISO);
+                    if (tmp.code.equalsIgnoreCase(selectedISO)) {
+//                      Log.e(TAG, "theIso : " + theIso);
+//                      Log.e(TAG, "Putting the shit in the shared preffs");
+                        BRSharedPrefs.putIso(context, tmp.code);
+                        BRSharedPrefs.putCurrencyListPosition(context, 0);
                     }
-                    set.add(tmp);
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
+                set.add(tmp);
             } else {
                 Log.e(TAG, "getCurrencies: failed to get currencies, response string: " + arr);
             }
@@ -167,32 +165,17 @@ public class BRApiManager {
     }
 
 
-    public static JSONArray fetchRates(Activity activity) {
-        String jsonString = urlGET(activity, String.format("https://%s/rates", BreadApp.HOST));
-        JSONArray jsonArray = null;
+    public static JSONObject fetchRates(Activity activity) {
+        String jsonString = urlGET(activity, "https://api.coinmarketcap.com/v2/ticker/374/");
+        JSONObject jsonObject = null;
         if (jsonString == null) return null;
         try {
             JSONObject obj = new JSONObject(jsonString);
-            jsonArray = obj.getJSONArray("body");
+            jsonObject = obj.getJSONObject("data");
 
         } catch (JSONException ignored) {
         }
-        return jsonArray == null ? backupFetchRates(activity) : jsonArray;
-    }
-
-    public static JSONArray backupFetchRates(Activity activity) {
-        String jsonString = urlGET(activity, "https://api.loshan.co.uk/api/v1/ticker");
-
-        JSONArray jsonArray = null;
-        if (jsonString == null) return null;
-        try {
-            JSONObject obj = new JSONObject(jsonString);
-
-            jsonArray = obj.getJSONArray("price");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return jsonArray;
+        return jsonObject;
     }
 
     public static void updateFeePerKb(Context app) {

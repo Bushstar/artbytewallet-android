@@ -175,8 +175,8 @@ public class BRActivity extends Activity {
         //set status bar color
 //        ActivityUTILS.setStatusBarColor(app, android.R.color.transparent);
         InternetManager.getInstance();
-//        if (!(app instanceof IntroActivity || app instanceof RecoverActivity || app instanceof WriteDownActivity))
-//            BRApiManager.getInstance().startTimer(app);
+        if (!(app instanceof IntroActivity || app instanceof RecoverActivity || app instanceof WriteDownActivity))
+            BRApiManager.getInstance().startTimer(app);
         //show wallet locked if it is
         if (!ActivityUTILS.isAppSafe(app))
             if (AuthManager.getInstance().isWalletDisabled(app))

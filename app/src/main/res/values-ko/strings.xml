@@ -555,7 +555,7 @@
   <!-- Link Text (see TouchIdSettings.customizeText) -->
   <string name="TouchIdSettings.linkText">터치 ID 지불 한도 화면</string>
   <!-- Spending Limit: b100,000 ($100) -->
-  <string name="TouchIdSettings.spendingLimit">지불 한도: %1$s</string>
+  <string name="TouchIdSettings.spendingLimit">지불 한도: %1$s (%2$s)</string>
   <!-- Touch id switch label. -->
   <string name="TouchIdSettings.switchLabel">브레드에서</string>
   <!-- Enable fingerprint for this wallet called ArtByte -->

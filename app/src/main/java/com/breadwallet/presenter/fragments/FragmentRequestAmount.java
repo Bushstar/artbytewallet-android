@@ -122,7 +122,6 @@ public class FragmentRequestAmount extends Fragment {
         amountEdit = (EditText) rootView.findViewById(R.id.amount_edit);
         amountBuilder = new StringBuilder(0);
         isoButton = (Button) rootView.findViewById(R.id.iso_button);
-        isoButton.setVisibility(View.GONE);
         mTitle = (TextView) rootView.findViewById(R.id.title);
         mAddress = (TextView) rootView.findViewById(R.id.address_text);
         mQrImage = (ImageView) rootView.findViewById(R.id.qr_image);
@@ -421,7 +420,7 @@ public class FragmentRequestAmount extends Fragment {
         String tmpAmount = amountBuilder.toString();
         amountEdit.setText(tmpAmount);
         isoText.setText(BRCurrency.getSymbolByIso(getActivity(), selectedIso));
-        isoButton.setText(String.format("%s(%s)", BRCurrency.getCurrencyName(getActivity(), selectedIso), BRCurrency.getSymbolByIso(getActivity(), selectedIso)));
+        isoButton.setText(String.format("%s", BRCurrency.getCurrencyName(getActivity(), selectedIso), BRCurrency.getSymbolByIso(getActivity(), selectedIso)));
 
     }
 

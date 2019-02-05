@@ -555,7 +555,7 @@
   <!-- Link Text (see TouchIdSettings.customizeText) -->
   <string name="TouchIdSettings.linkText">Pantalla de límite de gasto del Touch ID</string>
   <!-- Spending Limit: b100,000 ($100) -->
-  <string name="TouchIdSettings.spendingLimit">Límite de gasto: %1$s</string>
+  <string name="TouchIdSettings.spendingLimit">Límite de gasto: %1$s (%2$s)</string>
   <!-- Touch id switch label. -->
   <string name="TouchIdSettings.switchLabel">Activa Touch ID para ArtByte</string>
   <!-- Enable fingerprint for this wallet called ArtByte -->

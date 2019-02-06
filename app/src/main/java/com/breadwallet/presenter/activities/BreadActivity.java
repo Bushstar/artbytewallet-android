@@ -403,7 +403,6 @@ public class BreadActivity extends BRActivity implements BRWalletManager.OnBalan
 //        syncingLayout = (ConstraintLayout) findViewById(R.id.syncing_layout);
 //        recyclerLayout = (LinearLayout) findViewById(R.id.recycler_layout);
         searchIcon = (ImageButton) findViewById(R.id.search_icon);
-        searchIcon.setVisibility(View.GONE);
         barFlipper = (ViewFlipper) findViewById(R.id.tool_bar_flipper);
         searchBar = (BRSearchBar) findViewById(R.id.search_bar);
 

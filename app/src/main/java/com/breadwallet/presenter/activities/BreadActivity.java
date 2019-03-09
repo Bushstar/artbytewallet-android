@@ -150,7 +150,7 @@ public class BreadActivity extends BRActivity implements BRWalletManager.OnBalan
 
         BRAnimator.init(this);
         primaryPrice.setTextSize(TypedValue.COMPLEX_UNIT_PX, t1Size);//make it the size it should be after animation to get the X
-        secondaryPrice.setTextSize(TypedValue.COMPLEX_UNIT_PX, t2Size);//make it the size it should be after animation to get the X
+        secondaryPrice.setTextSize(TypedValue.COMPLEX_UNIT_PX, t1Size);//make it the size it should be after animation to get the X
 
         if (introSetPitActivity != null) introSetPitActivity.finish();
         if (introActivity != null) introActivity.finish();
@@ -235,6 +235,7 @@ public class BreadActivity extends BRActivity implements BRWalletManager.OnBalan
                 transaction.commit();
             }
         });
+/*
         primaryPrice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -247,7 +248,7 @@ public class BreadActivity extends BRActivity implements BRWalletManager.OnBalan
                 swap();
             }
         });
-
+*/
         searchIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -258,11 +259,11 @@ public class BreadActivity extends BRActivity implements BRWalletManager.OnBalan
         });
 
     }
-
+/*
     private void swap() {
         if (!BRAnimator.isClickAllowed()) return;
         boolean b = !BRSharedPrefs.getPreferredBTC(this);
-        setPriceTags(b, true);
+        //setPriceTags(b, true);
         BRSharedPrefs.putPreferredBTC(this, b);
     }
 
@@ -293,7 +294,7 @@ public class BreadActivity extends BRActivity implements BRWalletManager.OnBalan
             }
         }, toolBarConstraintLayout.getLayoutTransition().getDuration(LayoutTransition.CHANGING));
     }
-
+*/
     private void setUpBarFlipper() {
         barFlipper.setInAnimation(AnimationUtils.loadAnimation(this, R.anim.flipper_enter));
         barFlipper.setOutAnimation(AnimationUtils.loadAnimation(this, R.anim.flipper_exit));
@@ -414,7 +415,7 @@ public class BreadActivity extends BRActivity implements BRWalletManager.OnBalan
                     observer.removeOnGlobalLayoutListener(this);
                 if (uiIsDone) return;
                 uiIsDone = true;
-                setPriceTags(BRSharedPrefs.getPreferredBTC(BreadActivity.this), false);
+                //setPriceTags(BRSharedPrefs.getPreferredBTC(BreadActivity.this), false);
             }
         });
 
@@ -483,7 +484,7 @@ public class BreadActivity extends BRActivity implements BRWalletManager.OnBalan
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        primaryPrice.setText(formattedBTCAmount);
+                        primaryPrice.setText(formattedBTCAmount + " ABY");
                         secondaryPrice.setText(String.format("%s", formattedCurAmount));
 
                     }

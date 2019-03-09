@@ -181,7 +181,7 @@ public class Utils {
         if (rURL != null && !rURL.isEmpty())
             builder = builder.appendQueryParameter("r", rURL);
 
-        return builder.build().toString().replaceFirst("/", "");
+        return builder.build().toString().replaceFirst("/", "\n");
 
     }
 

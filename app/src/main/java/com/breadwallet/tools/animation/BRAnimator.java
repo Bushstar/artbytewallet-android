@@ -76,6 +76,7 @@ public class BRAnimator {
     private static FragmentSignal fragmentSignal;
     private static boolean clickAllowed = true;
     public static int SLIDE_ANIMATION_DURATION = 300;
+    public static float t0Size;
     public static float t1Size;
     public static float t2Size;
     public static boolean supportIsShowing;
@@ -100,6 +101,7 @@ public class BRAnimator {
         if (app == null) return;
 //        t1Size = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 30, app.getResources().getDisplayMetrics());
 //        t2Size = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 16, app.getResources().getDisplayMetrics());
+        t0Size = 60;
         t1Size = 30;
         t2Size = 16;
     }

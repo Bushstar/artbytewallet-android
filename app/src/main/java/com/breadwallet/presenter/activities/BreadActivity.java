@@ -51,6 +51,7 @@ import java.math.BigDecimal;
 import static com.breadwallet.presenter.activities.intro.IntroActivity.introActivity;
 import static com.breadwallet.presenter.activities.ReEnterPinActivity.reEnterPinActivity;
 import static com.breadwallet.presenter.activities.SetPinActivity.introSetPitActivity;
+import static com.breadwallet.tools.animation.BRAnimator.t0Size;
 import static com.breadwallet.tools.animation.BRAnimator.t1Size;
 import static com.breadwallet.tools.animation.BRAnimator.t2Size;
 import static com.breadwallet.tools.util.BRConstants.PLATFORM_ON;
@@ -149,8 +150,8 @@ public class BreadActivity extends BRActivity implements BRWalletManager.OnBalan
         setUpBarFlipper();
 
         BRAnimator.init(this);
-        primaryPrice.setTextSize(TypedValue.COMPLEX_UNIT_PX, t1Size);//make it the size it should be after animation to get the X
-        secondaryPrice.setTextSize(TypedValue.COMPLEX_UNIT_PX, t1Size);//make it the size it should be after animation to get the X
+        primaryPrice.setTextSize(TypedValue.COMPLEX_UNIT_PX, t0Size);//make it the size it should be after animation to get the X
+        //secondaryPrice.setTextSize(TypedValue.COMPLEX_UNIT_PX, t1Size);//make it the size it should be after animation to get the X
 
         if (introSetPitActivity != null) introSetPitActivity.finish();
         if (introActivity != null) introActivity.finish();
@@ -388,8 +389,8 @@ public class BreadActivity extends BRActivity implements BRWalletManager.OnBalan
 //        walletName = (TextView) findViewById(R.id.wallet_name_text);
         menuButton = (LinearLayout) findViewById(R.id.menu_layout);
         primaryPrice = (TextView) findViewById(R.id.primary_price);
-        secondaryPrice = (TextView) findViewById(R.id.secondary_price);
-        equals = (TextView) findViewById(R.id.equals);
+        //secondaryPrice = (TextView) findViewById(R.id.secondary_price);
+        //equals = (TextView) findViewById(R.id.equals);
         priceChange = (TextView) findViewById(R.id.price_change_text);
         emptyTip = (TextView) findViewById(R.id.empty_tx_tip);
 //        syncLabel = (TextView) findViewById(R.id.syncing_label);
@@ -443,7 +444,7 @@ public class BreadActivity extends BRActivity implements BRWalletManager.OnBalan
         else
             return myView.getY() + getRelativeY((View) myView.getParent());
     }
-
+/*
     //0 crypto is left, 1 crypto is right
     private int getSwapPosition() {
         if (primaryPrice == null || secondaryPrice == null) {
@@ -451,7 +452,7 @@ public class BreadActivity extends BRActivity implements BRWalletManager.OnBalan
         }
         return getRelativeX(primaryPrice) < getRelativeX(secondaryPrice) ? 0 : 1;
     }
-
+*/
     @Override
     public void onBalanceChanged(final long balance) {
         updateUI();
@@ -485,7 +486,7 @@ public class BreadActivity extends BRActivity implements BRWalletManager.OnBalan
                     @Override
                     public void run() {
                         primaryPrice.setText(formattedBTCAmount + " ABY");
-                        secondaryPrice.setText(String.format("%s", formattedCurAmount));
+                        //secondaryPrice.setText(String.format("%s", formattedCurAmount));
 
                     }
                 });
